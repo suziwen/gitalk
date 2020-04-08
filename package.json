@@ -90,7 +90,6 @@
   "standard-version": {
     "releaseCommitMessageFormat": "chore(release): v{{currentTag}} :rocket:",
     "scripts": {
-      "prerelease": "npm test",
       "precommit": "npm run-script build > /dev/null && git add ./dist"
     }
   }
