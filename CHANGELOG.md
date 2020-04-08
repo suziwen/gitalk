@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.1](https://github.com/suziwen/gitalk/compare/v1.6.2...v2.0.1) (2020-04-08)
+
+
+### Bug Fixes
+
+* replace onMouseDown to onClick ([873caa8](https://github.com/suziwen/gitalk/commit/873caa8407407476ea682bad8a5b6f60534e3cb4))
+
 ### [1.0.1](https://github.com/suziwen/gitalk/compare/v1.6.2...v1.0.1) (2020-04-08)
 
 
