@@ -220,7 +220,7 @@ class GitalkComponent extends Component {
     })
   }
   getIssueByLabels () {
-    const { owner, repo, id, labels, title, clientID, clientSecret } = this.options
+    const { owner, repo, labels, title, clientID, clientSecret } = this.options
 
     return axiosGithub.get(`/repos/${owner}/${repo}/issues`, {
       auth: {
@@ -242,9 +242,7 @@ class GitalkComponent extends Component {
 
         isNoInit = true
       } else {
-        const filteredIssues = res.data.filter((resIssue)=> {
-          return title == resIssue.title
-        })
+        const filteredIssues = res.data.filter(resIssue => (title === resIssue.title))
         if (!(filteredIssues.length)) {
           if (!createIssueManually && this.isAdmin) {
             return this.createIssue()
@@ -253,6 +251,36 @@ class GitalkComponent extends Component {
           isNoInit = true
         }
         issue = filteredIssues[0]
+      }
+      this.setState({ issue, isNoInit })
+      return issue
+    })
+  }
+  getIssueBySearchBody () {
+    const { owner, repo, id, labels, clientID, clientSecret } = this.options
+    const queryStr = `"Gitalk_${id}" type:issue in:body ${labels.map(label => (`label:${label}`)).join(' ')} repo:${owner}/${repo}`
+
+    return axiosGithub.get(`/search/issues`, {
+      auth: {
+        username: clientID,
+        password: clientSecret
+      },
+      params: {
+        q: queryStr,
+        t: Date.now()
+      }
+    }).then(res => {
+      const { createIssueManually } = this.options
+      let isNoInit = false
+      let issue = null
+      if (!(res && res.total_count)) {
+        if (!createIssueManually && this.isAdmin) {
+          return this.createIssue()
+        }
+
+        isNoInit = true
+      } else {
+        issue = res.items[0]
       }
       this.setState({ issue, isNoInit })
       return issue
@@ -272,7 +300,7 @@ class GitalkComponent extends Component {
         return resIssue
       })
     }
-    return this.getIssueByLabels()
+    return this.getIssueBySearchBody()
   }
   createIssue () {
     const { owner, repo, title, body, id, labels, url } = this.options
@@ -282,7 +310,7 @@ class GitalkComponent extends Component {
       body: body || `${url} \n\n ${
         getMetaContent('description') ||
         getMetaContent('description', 'og:description') || ''
-      }`
+      }\n\nGitalk_${id}`
     }, {
       headers: {
         Authorization: `token ${this.accessToken}`
