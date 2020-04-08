@@ -273,14 +273,14 @@ class GitalkComponent extends Component {
       const { createIssueManually } = this.options
       let isNoInit = false
       let issue = null
-      if (!(res && res.total_count)) {
+      if (!(res && res.data && res.data.total_count)) {
         if (!createIssueManually && this.isAdmin) {
           return this.createIssue()
         }
 
         isNoInit = true
       } else {
-        issue = res.items[0]
+        issue = res.data.items[0]
       }
       this.setState({ issue, isNoInit })
       return issue
