@@ -3410,7 +3410,6 @@ var GitalkComponent = function (_Component) {
       var _options2 = this.options,
           owner = _options2.owner,
           repo = _options2.repo,
-          id = _options2.id,
           labels = _options2.labels,
           title = _options2.title,
           clientID = _options2.clientID,
@@ -3439,7 +3438,7 @@ var GitalkComponent = function (_Component) {
           isNoInit = true;
         } else {
           var filteredIssues = res.data.filter(function (resIssue) {
-            return title == resIssue.title;
+            return title === resIssue.title;
           });
           if (!filteredIssues.length) {
             if (!createIssueManually && _this5.isAdmin) {
@@ -3455,9 +3454,53 @@ var GitalkComponent = function (_Component) {
       });
     }
   }, {
+    key: 'getIssueBySearchBody',
+    value: function getIssueBySearchBody() {
+      var _this6 = this;
+
+      var _options3 = this.options,
+          owner = _options3.owner,
+          repo = _options3.repo,
+          id = _options3.id,
+          labels = _options3.labels,
+          clientID = _options3.clientID,
+          clientSecret = _options3.clientSecret;
+
+      var queryStr = '"Gitalk_' + id + '" type:issue in:body ' + labels.map(function (label) {
+        return 'label:' + label;
+      }).join(' ') + ' repo:' + owner + '/' + repo;
+
+      return _util.axiosGithub.get('/search/issues', {
+        auth: {
+          username: clientID,
+          password: clientSecret
+        },
+        params: {
+          q: queryStr,
+          t: Date.now()
+        }
+      }).then(function (res) {
+        var createIssueManually = _this6.options.createIssueManually;
+
+        var isNoInit = false;
+        var issue = null;
+        if (!(res && res.total_count)) {
+          if (!createIssueManually && _this6.isAdmin) {
+            return _this6.createIssue();
+          }
+
+          isNoInit = true;
+        } else {
+          issue = res.items[0];
+        }
+        _this6.setState({ issue: issue, isNoInit: isNoInit });
+        return issue;
+      });
+    }
+  }, {
     key: 'getIssue',
     value: function getIssue() {
-      var _this6 = this;
+      var _this7 = this;
 
       var number = this.options.number;
       var issue = this.state.issue;
@@ -3469,36 +3512,36 @@ var GitalkComponent = function (_Component) {
 
       if (typeof number === 'number' && number > 0) {
         return this.getIssueById().then(function (resIssue) {
-          if (!resIssue) return _this6.getIssueByLabels();
+          if (!resIssue) return _this7.getIssueByLabels();
           return resIssue;
         });
       }
-      return this.getIssueByLabels();
+      return this.getIssueBySearchBody();
     }
   }, {
     key: 'createIssue',
     value: function createIssue() {
-      var _this7 = this;
+      var _this8 = this;
 
-      var _options3 = this.options,
-          owner = _options3.owner,
-          repo = _options3.repo,
-          title = _options3.title,
-          body = _options3.body,
-          id = _options3.id,
-          labels = _options3.labels,
-          url = _options3.url;
+      var _options4 = this.options,
+          owner = _options4.owner,
+          repo = _options4.repo,
+          title = _options4.title,
+          body = _options4.body,
+          id = _options4.id,
+          labels = _options4.labels,
+          url = _options4.url;
 
       return _util.axiosGithub.post('/repos/' + owner + '/' + repo + '/issues', {
         title: title,
         labels: labels,
-        body: body || url + ' \n\n ' + ((0, _util.getMetaContent)('description') || (0, _util.getMetaContent)('description', 'og:description') || '')
+        body: body || url + ' \n\n ' + ((0, _util.getMetaContent)('description') || (0, _util.getMetaContent)('description', 'og:description') || '') + '\n\nGitalk_' + id
       }, {
         headers: {
           Authorization: 'token ' + this.accessToken
         }
       }).then(function (res) {
-        _this7.setState({ issue: res.data });
+        _this8.setState({ issue: res.data });
         return res.data;
       });
     }
@@ -3515,7 +3558,7 @@ var GitalkComponent = function (_Component) {
   }, {
     key: 'createComment',
     value: function createComment() {
-      var _this8 = this;
+      var _this9 = this;
 
       var _state = this.state,
           comment = _state.comment,
@@ -3529,11 +3572,11 @@ var GitalkComponent = function (_Component) {
         }, {
           headers: {
             Accept: 'application/vnd.github.v3.full+json',
-            Authorization: 'token ' + _this8.accessToken
+            Authorization: 'token ' + _this9.accessToken
           }
         });
       }).then(function (res) {
-        _this8.setState({
+        _this9.setState({
           comment: '',
           comments: comments.concat(res.data),
           localComments: localComments.concat(res.data)
@@ -3549,11 +3592,11 @@ var GitalkComponent = function (_Component) {
   }, {
     key: 'like',
     value: function like(comment) {
-      var _this9 = this;
+      var _this10 = this;
 
-      var _options4 = this.options,
-          owner = _options4.owner,
-          repo = _options4.repo;
+      var _options5 = this.options,
+          owner = _options5.owner,
+          repo = _options5.repo;
       var user = this.state.user;
       var comments = this.state.comments;
 
@@ -3585,7 +3628,7 @@ var GitalkComponent = function (_Component) {
           return c;
         });
 
-        _this9.setState({
+        _this10.setState({
           comments: comments
         });
       });
@@ -3593,7 +3636,7 @@ var GitalkComponent = function (_Component) {
   }, {
     key: 'unLike',
     value: function unLike(comment) {
-      var _this10 = this;
+      var _this11 = this;
 
       var user = this.state.user;
       var comments = this.state.comments;
@@ -3639,7 +3682,7 @@ var GitalkComponent = function (_Component) {
             return c;
           });
 
-          _this10.setState({
+          _this11.setState({
             comments: comments
           });
         }
@@ -3665,10 +3708,10 @@ var GitalkComponent = function (_Component) {
       var _state2 = this.state,
           user = _state2.user,
           isIssueCreating = _state2.isIssueCreating;
-      var _options5 = this.options,
-          owner = _options5.owner,
-          repo = _options5.repo,
-          admin = _options5.admin;
+      var _options6 = this.options,
+          owner = _options6.owner,
+          repo = _options6.repo,
+          admin = _options6.admin;
 
       return _react2.default.createElement(
         'div',
@@ -3696,7 +3739,7 @@ var GitalkComponent = function (_Component) {
   }, {
     key: 'header',
     value: function header() {
-      var _this11 = this;
+      var _this12 = this;
 
       var _state3 = this.state,
           user = _state3.user,
@@ -3718,7 +3761,7 @@ var GitalkComponent = function (_Component) {
           { className: 'gt-header-comment' },
           _react2.default.createElement('textarea', {
             ref: function ref(t) {
-              _this11.commentEL = t;
+              _this12.commentEL = t;
             },
             className: 'gt-header-textarea ' + (isPreview ? 'hide' : ''),
             value: comment,
@@ -3761,7 +3804,7 @@ var GitalkComponent = function (_Component) {
   }, {
     key: 'comments',
     value: function comments() {
-      var _this12 = this;
+      var _this13 = this;
 
       var _state4 = this.state,
           user = _state4.user,
@@ -3769,10 +3812,10 @@ var GitalkComponent = function (_Component) {
           isLoadOver = _state4.isLoadOver,
           isLoadMore = _state4.isLoadMore,
           pagerDirection = _state4.pagerDirection;
-      var _options6 = this.options,
-          language = _options6.language,
-          flipMoveOptions = _options6.flipMoveOptions,
-          admin = _options6.admin;
+      var _options7 = this.options,
+          language = _options7.language,
+          flipMoveOptions = _options7.flipMoveOptions,
+          admin = _options7.admin;
 
       var totalComments = comments.concat([]);
       if (pagerDirection === 'last' && this.accessToken) {
@@ -3790,10 +3833,10 @@ var GitalkComponent = function (_Component) {
               key: c.id,
               user: user,
               language: language,
-              commentedText: _this12.i18n.t('commented'),
+              commentedText: _this13.i18n.t('commented'),
               admin: admin,
-              replyCallback: _this12.reply(c),
-              likeCallback: c.reactions && c.reactions.viewerHasReacted ? _this12.unLike.bind(_this12, c) : _this12.like.bind(_this12, c)
+              replyCallback: _this13.reply(c),
+              likeCallback: c.reactions && c.reactions.viewerHasReacted ? _this13.unLike.bind(_this13, c) : _this13.like.bind(_this13, c)
             });
           })
         ),
