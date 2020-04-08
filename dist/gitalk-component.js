@@ -3484,14 +3484,14 @@ var GitalkComponent = function (_Component) {
 
         var isNoInit = false;
         var issue = null;
-        if (!(res && res.total_count)) {
+        if (!(res && res.data && res.data.total_count)) {
           if (!createIssueManually && _this6.isAdmin) {
             return _this6.createIssue();
           }
 
           isNoInit = true;
         } else {
-          issue = res.items[0];
+          issue = res.data.items[0];
         }
         _this6.setState({ issue: issue, isNoInit: isNoInit });
         return issue;
