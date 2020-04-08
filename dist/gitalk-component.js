@@ -2858,11 +2858,14 @@ exports.default = function (_ref) {
   var src = _ref.src,
       className = _ref.className,
       alt = _ref.alt,
-      onError = _ref.onError;
+      _ref$defaultSrc = _ref.defaultSrc,
+      defaultSrc = _ref$defaultSrc === undefined ? '//cdn.jsdelivr.net/npm/gitalk@1/src/assets/icon/github.svg' : _ref$defaultSrc;
   return _react2.default.createElement(
     'div',
     { className: 'gt-avatar ' + className },
-    _react2.default.createElement('img', { src: src, alt: '@' + alt, onError: onError })
+    _react2.default.createElement('img', { src: src || defaultSrc, alt: '@' + alt, onError: function onError(e) {
+        e.target.src = defaultSrc;
+      } })
   );
 };
 
@@ -3409,6 +3412,7 @@ var GitalkComponent = function (_Component) {
           repo = _options2.repo,
           id = _options2.id,
           labels = _options2.labels,
+          title = _options2.title,
           clientID = _options2.clientID,
           clientSecret = _options2.clientSecret;
 
@@ -3419,7 +3423,7 @@ var GitalkComponent = function (_Component) {
           password: clientSecret
         },
         params: {
-          labels: labels.concat(id).join(','),
+          labels: labels.join(','),
           t: Date.now()
         }
       }).then(function (res) {
@@ -3434,7 +3438,17 @@ var GitalkComponent = function (_Component) {
 
           isNoInit = true;
         } else {
-          issue = res.data[0];
+          var filteredIssues = res.data.filter(function (resIssue) {
+            return title == resIssue.title;
+          });
+          if (!filteredIssues.length) {
+            if (!createIssueManually && _this5.isAdmin) {
+              return _this5.createIssue();
+            }
+
+            isNoInit = true;
+          }
+          issue = filteredIssues[0];
         }
         _this5.setState({ issue: issue, isNoInit: isNoInit });
         return issue;
@@ -3477,7 +3491,7 @@ var GitalkComponent = function (_Component) {
 
       return _util.axiosGithub.post('/repos/' + owner + '/' + repo + '/issues', {
         title: title,
-        labels: labels.concat(id),
+        labels: labels,
         body: body || url + ' \n\n ' + ((0, _util.getMetaContent)('description') || (0, _util.getMetaContent)('description', 'og:description') || '')
       }, {
         headers: {
@@ -3680,11 +3694,6 @@ var GitalkComponent = function (_Component) {
       );
     }
   }, {
-    key: 'handleImageErrored',
-    value: function handleImageErrored(obj) {
-      obj.target.src = "https://cdn.jsdelivr.net/npm/gitalk@1/src/assets/icon/github.svg";
-    }
-  }, {
     key: 'header',
     value: function header() {
       var _this11 = this;
@@ -3699,9 +3708,9 @@ var GitalkComponent = function (_Component) {
       return _react2.default.createElement(
         'div',
         { className: 'gt-header', key: 'header' },
-        user ? _react2.default.createElement(_avatar2.default, { className: 'gt-header-avatar', src: user.avatar_url, alt: user.login, onError: this.handleImageErrored.bind(this) }) : _react2.default.createElement(
+        user ? _react2.default.createElement(_avatar2.default, { className: 'gt-header-avatar', src: user.avatar_url, alt: user.login }) : _react2.default.createElement(
           'a',
-          { className: 'gt-avatar-github', onMouseDown: this.handleLogin },
+          { className: 'gt-avatar-github', onClick: this.handleLogin },
           _react2.default.createElement(_svg2.default, { className: 'gt-ico-github', name: 'github' })
         ),
         _react2.default.createElement(
@@ -3734,17 +3743,17 @@ var GitalkComponent = function (_Component) {
             user && _react2.default.createElement(_button2.default, {
               getRef: this.getRef,
               className: 'gt-btn-public',
-              onMouseDown: this.handleCommentCreate,
+              onClick: this.handleCommentCreate,
               text: this.i18n.t('comment'),
               isLoading: isCreating
             }),
             _react2.default.createElement(_button2.default, {
               className: 'gt-btn-preview',
-              onMouseDown: this.handleCommentPreview,
+              onClick: this.handleCommentPreview,
               text: isPreview ? this.i18n.t('edit') : this.i18n.t('preview')
               // isLoading={isPreviewing}
             }),
-            !user && _react2.default.createElement(_button2.default, { className: 'gt-btn-login', onMouseDown: this.handleLogin, text: this.i18n.t('login-with-github') })
+            !user && _react2.default.createElement(_button2.default, { className: 'gt-btn-login', onClick: this.handleLogin, text: this.i18n.t('login-with-github') })
           )
         )
       );
@@ -3840,7 +3849,7 @@ var GitalkComponent = function (_Component) {
           user ? _react2.default.createElement(_action2.default, { className: 'gt-action-sortdesc' + (isDesc ? ' is--active' : ''), onClick: this.handleSort('last'), text: this.i18n.t('sort-desc') }) : null,
           user ? _react2.default.createElement(_action2.default, { className: 'gt-action-logout', onClick: this.handleLogout, text: this.i18n.t('logout') }) : _react2.default.createElement(
             'a',
-            { className: 'gt-action gt-action-login', onMouseDown: this.handleLogin },
+            { className: 'gt-action gt-action-login', onClick: this.handleLogin },
             this.i18n.t('login-with-github')
           ),
           _react2.default.createElement(
@@ -8573,11 +8582,6 @@ var Comment = function (_Component) {
       }
     }
   }, {
-    key: 'handleImageErrored',
-    value: function handleImageErrored(obj) {
-      obj.target.src = "https://cdn.jsdelivr.net/npm/gitalk@1/src/assets/icon/github.svg";
-    }
-  }, {
     key: 'render',
     value: function render() {
       var _this2 = this;
@@ -8615,8 +8619,7 @@ var Comment = function (_Component) {
         _react2.default.createElement(_avatar2.default, {
           className: 'gt-comment-avatar',
           src: comment.user && comment.user.avatar_url,
-          alt: comment.user && comment.user.login,
-          onError: this.handleImageErrored.bind(this)
+          alt: comment.user && comment.user.login
         }),
         _react2.default.createElement(
           'div',
@@ -10280,7 +10283,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var GT_ACCESS_TOKEN = exports.GT_ACCESS_TOKEN = 'GT_ACCESS_TOKEN';
-var GT_VERSION = exports.GT_VERSION = "1.6.2"; // eslint-disable-line
+var GT_VERSION = exports.GT_VERSION = "1.0.0"; // eslint-disable-line
 var GT_COMMENT = exports.GT_COMMENT = 'GT_COMMENT';
 
 /***/ }),
