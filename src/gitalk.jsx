@@ -220,7 +220,7 @@ class GitalkComponent extends Component {
     })
   }
   getIssueByLabels () {
-    const { owner, repo, id, labels, clientID, clientSecret } = this.options
+    const { owner, repo, id, labels, title, clientID, clientSecret } = this.options
 
     return axiosGithub.get(`/repos/${owner}/${repo}/issues`, {
       auth: {
@@ -228,7 +228,7 @@ class GitalkComponent extends Component {
         password: clientSecret
       },
       params: {
-        labels: labels.concat(id).join(','),
+        labels: labels.join(','),
         t: Date.now()
       }
     }).then(res => {
@@ -242,7 +242,17 @@ class GitalkComponent extends Component {
 
         isNoInit = true
       } else {
-        issue = res.data[0]
+        const filteredIssues = res.data.filter((resIssue)=> {
+          return title == resIssue.title
+        })
+        if (!(filteredIssues.length)) {
+          if (!createIssueManually && this.isAdmin) {
+            return this.createIssue()
+          }
+
+          isNoInit = true
+        }
+        issue = filteredIssues[0]
       }
       this.setState({ issue, isNoInit })
       return issue
@@ -268,7 +278,7 @@ class GitalkComponent extends Component {
     const { owner, repo, title, body, id, labels, url } = this.options
     return axiosGithub.post(`/repos/${owner}/${repo}/issues`, {
       title,
-      labels: labels.concat(id),
+      labels: labels,
       body: body || `${url} \n\n ${
         getMetaContent('description') ||
         getMetaContent('description', 'og:description') || ''

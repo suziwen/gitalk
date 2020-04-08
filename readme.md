@@ -10,6 +10,12 @@
 
 Gitalk is a modern comment component based on GitHub Issue and Preact.
 
+## fix
+
+https://github.com/gitalk/gitalk/issues/375
+https://github.com/gitalk/gitalk/issues/268
+https://github.com/gitalk/gitalk/pull/269
+
 ## Features
 
 - Authentication with github account
